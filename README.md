@@ -188,6 +188,11 @@ The Administrator password is: homenetworkingadministrator
 The Windows server is running a mail server, as we saw from the instructions.pdf file it is using the default Windows Mail client to connect to the mail server
 <img width="752" height="191" alt="image" src="https://github.com/user-attachments/assets/81673b6d-4918-4b0d-b5f1-ce570e393af2" />
 
+Searching online for CVE for Windows Mail, I found CVE-2024-21413 alongside a PoC in GitHub https://github.com/xaitax/CVE-2024-21413-Microsoft-Outlook-Remote-Code-Execution-Vulnerability/blob/main/README.md. To use this PoC we also need someone to recieve the email we are going to send. Going back to the website we can see some employee names listed over there:
+<img width="813" height="387" alt="image" src="https://github.com/user-attachments/assets/acbed4ca-1147-4f87-8fd5-4fc7460eb440" />
+Let's try targeting Maya from support:
+```bash
+
 
 
 
