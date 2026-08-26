@@ -231,10 +231,7 @@ smbclient -L //<machine-ip> -U maya%m4y4ngs4ri
 ```
 <img width="1916" height="190" alt="image" src="https://github.com/user-attachments/assets/7e6375ef-5f68-4524-8c3d-cc9da9f8c6e7" />
 
-Ok, Important Documents seems, well, pretty important. Let's check it out:
-```bash
-```
-There is nothing there, let's try it over at evil-winrm, and it works:
+Let's try the credentials over at evil-winrm, and it works:
 
 <img width="1912" height="237" alt="image" src="https://github.com/user-attachments/assets/863e20eb-3a3c-465d-8e8c-20479c45aef0" />
 
