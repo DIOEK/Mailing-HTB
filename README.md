@@ -116,7 +116,8 @@ PORT   STATE SERVICE
 Nmap done: 1 IP address (1 host up) scanned in 1.94 seconds
 ```
 
-We need authentication, but superficial user enumeration is possible, it even shows us that administrator and info are valid accounts. For now let's what awaits behind port 80:
+We need authentication, but superficial user enumeration is possible, it even shows us that administrator and info are valid accounts.
+For now let's what awaits behind port 80:
 <img width="698" height="758" alt="image" src="https://github.com/user-attachments/assets/2e03e842-5dfe-4c41-a307-5f5a07f70234" />
 
 There is a download link, let's check where it leads with burp:
